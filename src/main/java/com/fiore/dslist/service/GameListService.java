@@ -8,13 +8,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.fiore.dslist.dto.GameListDTO;
 import com.fiore.dslist.entities.GameList;
+import com.fiore.dslist.projections.GameMinProjection;
 import com.fiore.dslist.repositories.GameListRepository;
+import com.fiore.dslist.repositories.GameRepository;
 
 @Service
 public class GameListService {
 
 	@Autowired
 	private GameListRepository gameListRepository;
+	
+	@Autowired
+	private GameRepository gameRepository;
+	
 	
 	
 	@Transactional(readOnly = true)
@@ -23,5 +29,24 @@ public class GameListService {
 		return result.stream().map(x -> new GameListDTO (x)).toList();
 	 
     }
+	
+	@Transactional  
+	public void move(Long listId, int sourceIndex, int destinationIndex) {
+		
+		List<GameMinProjection> list = gameRepository.searchByList(listId);
+		
+		GameMinProjection obj = list.remove(sourceIndex); //remove o objeto da posição de origem na lista 
+		
+		list.add(destinationIndex, obj);
+		
+		int min = sourceIndex < destinationIndex ? sourceIndex : destinationIndex; //acha o mínimo dos dois 
+		int max = sourceIndex < destinationIndex ? destinationIndex : sourceIndex; //acha o máximo dos dois
+		
+		for (int i = min; i<= max; i++) {
+			gameListRepository.updateBelongingPosition(listId, list.get(i).getId(), i);
+			
+		}
+		
+	}
 	
 }
